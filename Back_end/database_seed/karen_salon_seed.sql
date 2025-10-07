@@ -1,4 +1,4 @@
-USE karen_salon;
+USE railway;
 
 CREATE TABLE IF NOT EXIST employees (
 	id INT AUTO_INCREMENT PRIMARY KEY,

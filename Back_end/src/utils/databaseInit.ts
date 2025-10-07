@@ -19,7 +19,6 @@ const databaseInit = {
             user: process.env.DB_USERNAME,
             password: process.env.DB_PASSWORD,
             database: process.env.DB_NAME
-
         });
         connection.query(`SHOW TABLES`).then(async([result]) => {
             if((result as any[]).length == 7) {
