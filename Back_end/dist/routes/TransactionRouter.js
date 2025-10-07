@@ -1,8 +1,10 @@
 import express from 'express';
 import TransactionController from '../controllers/TransactionController.js';
+import jwtAuth from '../middleware/auth.js';
 const TransactionRouter = express.Router();
 TransactionRouter.get("/", TransactionController.getMany);
 TransactionRouter.get("/date", TransactionController.getByDatePaid);
+TransactionRouter.get("/list/:userId", jwtAuth.requireAuth, jwtAuth.requireSelfOrRoles(['admin']), TransactionController.getByUserId);
 TransactionRouter.get("/:id", TransactionController.getById);
 TransactionRouter.post("/", TransactionController.create);
 TransactionRouter.patch("/:id", TransactionController.update);

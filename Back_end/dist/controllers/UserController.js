@@ -95,6 +95,7 @@ const userController = {
         newUser.role = "customer";
         User.create(newUser).then((result) => {
             let customerInDb = {
+                id: -1,
                 refId: result.id
             };
             Customer.create(customerInDb).then(() => {

@@ -108,7 +108,7 @@ class User {
                     return rej(createError(404, "user_not_found", "User Not Found"));
                 }
                 if (modifiedUser.password && !modifiedUser.currentPassword) {
-                    return rej(createError(401, "invalid_password", "Invalid Password"));
+                    return rej(createError(400, "bad_request", "Current password is required to set a new password"));
                 }
                 if (modifiedUser.currentPassword && modifiedUser.currentPassword != data.toObject().password) {
                     return rej(createError(401, "invalid_password", "Invalid Password"));

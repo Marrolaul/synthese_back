@@ -11,10 +11,12 @@ const databaseInit = {
         const connection = await mysql.createConnection({
             host: process.env.HOST,
             user: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME
         });
-        connection.query(`SHOW DATABASES LIKE ?`, [process.env.DB_NAME]).then(async ([result]) => {
-            if (result.length == 0) {
+        connection.query(`SHOW TABLES`).then(async ([result]) => {
+            console.log(result.length);
+            if (result.length != 7) {
                 console.log("❌ MySql database not found! Creating...");
                 await createMySqlDatabase(filePathToSeed);
                 await createEmployeesInDbs(filePathToEmployee);
@@ -78,8 +80,8 @@ async function createCustomersInDbs(filePath) {
         try {
             User.create(customer).then((result) => {
                 let customerInDb = {
+                    id: -1,
                     refId: result.id,
-                    isActive: true
                 };
                 Customer.create(customerInDb).catch(() => {
                     User.delete(customerInDb.refId);

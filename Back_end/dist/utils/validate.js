@@ -1,4 +1,5 @@
 import createError from "./createError.js";
+import convert from "./convert.js";
 const validate = {
     isValidString(str) {
         return typeof str === 'string' && str.trim().length !== 0;
@@ -36,6 +37,22 @@ const validate = {
         if (h >= 24)
             return false;
         return true;
+    },
+    isArrayOfNumber(data) {
+        if (!Array.isArray(data)) {
+            return false;
+        }
+        for (let i = 0; i < data.length; i++) {
+            if (typeof data[i] != "number") {
+                return false;
+            }
+        }
+        return true;
+    },
+    timeRange(startStr, endStr) {
+        const start = convert.toMinutes(startStr);
+        const end = convert.toMinutes(endStr);
+        return start > 0 && end < 1440 && start < end;
     }
 };
 export default validate;

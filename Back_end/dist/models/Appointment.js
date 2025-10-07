@@ -66,7 +66,7 @@ export class Appointment {
         }
         const [result] = await db.query(query, params);
         if (result.length === 0)
-            throw createError(404, "appointment_not_found", "Appointment not found");
+            return [];
         const appointments = await Promise.all(result.map(async (a) => {
             const [customer, employee] = await Promise.all([
                 User.getById(a.customerRefId),
@@ -86,7 +86,8 @@ export class Appointment {
                     duration: a.duration
                 },
                 date: a.date.toISOString().split("T")[0],
-                startTime: a.startTime
+                startTime: a.startTime,
+                isPaid: a.transactionId ? true : false
             };
         }));
         return appointments;
@@ -96,6 +97,7 @@ export class Appointment {
             a.id as appointmentId,
             a.date,
             a.startTime,
+            a.transactionId,
             e.id as employeeId,
             e.refId as employeeRefId,
             c.refId as customerRefId,
@@ -106,19 +108,20 @@ export class Appointment {
          FROM appointments a
          JOIN employees e ON a.employeeId = e.id
          JOIN customers c ON a.customerId = c.id
-         JOIN haircuts h ON a.haircutId = h.id`;
+         JOIN haircuts h ON a.haircutId = h.id
+         WHERE status != 'cancelled'`;
         switch (field) {
             case "appointment":
-                query += " WHERE a.id = ?";
+                query += " AND a.id = ?";
                 break;
             case "customer":
-                query += " WHERE a.customerId = ?";
+                query += " AND a.customerId = ?";
                 break;
             case "employee":
-                query += " WHERE a.employeeId = ?";
+                query += " AND a.employeeId = ?";
                 break;
             default:
-                query += " WHERE a.id = ?";
+                query += " AND a.id = ?";
         }
         if (date)
             query += " AND a.date = ?";
@@ -138,5 +141,12 @@ export class Appointment {
     static async delete(id) {
         const [result] = await db.query("DELETE FROM appointments WHERE id = ?", [id]);
         return result;
+    }
+    static async getByUserAndPaid(userId) {
+        const result = await db.query("SELECT * FROM appointment WHERE customerId = ? AND transactionId NOT NULL", [userId]);
+        const appointmentsList = result.map((element) => {
+            return new Appointment(element);
+        });
+        return appointmentsList;
     }
 }

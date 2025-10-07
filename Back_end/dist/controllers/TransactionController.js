@@ -1,6 +1,9 @@
 import createError from "../utils/createError.js";
 import validate from "../utils/validate.js";
 import { Transaction } from "../models/Transaction.js";
+import Customer from "../models/Customer.js";
+import { Appointment } from "../models/Appointment.js";
+const ID_LENGTH = 24;
 const TransactionController = {
     async getMany(req, res, next) {
         try {
@@ -55,12 +58,13 @@ const TransactionController = {
     },
     async create(req, res, next) {
         try {
-            const { datePaid, totalPrice, paymentMethod } = req.body;
+            const { datePaid, totalPrice, paymentMethod, appointmentsId } = req.body;
             const transaction = new Transaction({ datePaid, totalPrice, paymentMethod });
-            await transaction.validate();
+            transaction.validate();
             const result = await Transaction.create(transaction);
-            // TODO récupérer le ID du rendez-vous (appointmentId)
-            /* await transaction.confirm(appointmentId) */
+            appointmentsId.forEach(async (id) => {
+                await result.confirm(id);
+            });
             res.status(200).json(result);
         }
         catch (err) {
@@ -102,5 +106,32 @@ const TransactionController = {
             next(err);
         }
     },
+    async getByUserId(req, res, next) {
+        let userId = req.params.userId;
+        if (userId.length != ID_LENGTH) {
+            next(createError(400, "bad_request", "Bad request"));
+        }
+        const userToGetTransaction = await Customer.getByRefId(userId);
+        const appointmentsList = await Appointment.getByUserAndPaid(userToGetTransaction.id);
+        const appointmentTypeList = await Promise.all(appointmentsList.map((element) => Appointment.getByFieldId(element.id)));
+        let transactionsIdList = appointmentsList.reduce((acc, element) => {
+            if (element.transactionId && !acc.includes(element.transactionId)) {
+                acc.push(element.transactionId);
+            }
+            return acc;
+        }, []);
+        let transactionsList = transactionsIdList.map((id) => {
+            let recoveredTransaction = new Transaction(Transaction.getById(id));
+            let transactionToAdd = {
+                id: id,
+                date: recoveredTransaction.datePaid,
+                totalPrice: recoveredTransaction.totalPrice,
+                appointments: appointmentTypeList[0].filter((element) => element.id === id),
+                paymentMethod: recoveredTransaction.paymentMethod
+            };
+            return transactionToAdd;
+        });
+        return transactionsList;
+    }
 };
 export default TransactionController;

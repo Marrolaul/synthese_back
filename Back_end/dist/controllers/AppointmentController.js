@@ -4,6 +4,7 @@ import createError from "../utils/createError.js";
 import Employee from "../models/Employee.js";
 import User from "../models/User.js";
 import Haircut from "../models/Haircut.js";
+import Customer from "../models/Customer.js";
 const AppointmentController = {
     async getMany(req, res, next) {
         try {
@@ -28,18 +29,18 @@ const AppointmentController = {
     },
     async getByFieldId(req, res, next) {
         try {
-            const err = validate.isValidNumberAdv([
-                { value: req.params.id, min: 1 }
-            ]);
-            if (err)
-                throw err;
-            const id = Number(req.params.id);
-            const { field } = req.body || "appointment";
-            const appointment = await Appointment.getByFieldId(id, field);
-            if (!appointment) {
+            const refId = req.query.id;
+            const employee = await Employee.getByRefId(refId);
+            if (!employee?.id) {
+                return next(createError(404, "employee_not_found", "Employee not found"));
+            }
+            const field = req.query.field || "appointment";
+            const date = req.query.date || undefined;
+            const appointments = await Appointment.getByFieldId(employee.id, field, date);
+            if (!appointments) {
                 return next(createError(404, "appointment_not_found", "Appointment not found"));
             }
-            res.status(200).json(appointment);
+            res.status(200).json(appointments);
         }
         catch (err) {
             next(err);
@@ -48,7 +49,9 @@ const AppointmentController = {
     async create(req, res, next) {
         try {
             const { transactionId, employeeId, customerId, haircutId, date, startTime, status } = req.body;
-            const appointment = new Appointment({ transactionId, employeeId, customerId, haircutId, date, startTime, status });
+            const employee = await Employee.getByRefId(employeeId);
+            const customer = await Customer.getByRefId(customerId);
+            const appointment = new Appointment({ transactionId, employeeId: employee.id, customerId: customer.id, haircutId, date, startTime, status });
             appointment.validate();
             const result = await Appointment.create(appointment);
             res.status(200).json(result);

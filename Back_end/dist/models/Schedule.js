@@ -7,9 +7,9 @@ export default class Schedule {
     constructor(data) {
         this.id = data.id ?? null;
         this.employeeId = data.employeeId;
-        this.date = data.date;
-        this.startTime = data.startTime;
-        this.endTime = data.endTime;
+        this.date = data.date || "";
+        this.startTime = data.startTime || "";
+        this.endTime = data.endTime || "";
     }
     validate() {
         if (!validate.mySqlDate(this.date))
@@ -18,6 +18,8 @@ export default class Schedule {
             throw createError(400, "invalid_time", "Invalid time format for startTime. Format expected: HH:MM:SS");
         if (!validate.mySqlTime(this.endTime))
             throw createError(400, "invalid_time", "Invalid date format for endTime. Format expected: HH:MM:SS");
+        if (!validate.timeRange(this.startTime, this.endTime))
+            throw createError(400, "invalid_time_range", "Invalid time range. The start time must be earlier than the end time.");
         return null;
     }
     static async getMany(limit, skip) {
@@ -28,8 +30,12 @@ export default class Schedule {
             count: scheduleCount[0].value
         };
     }
-    static async getByEmployeeId(id) {
-        const [result] = await db.query("SELECT id, date, startTime, endTime FROM schedules WHERE employeeId = ?", [id]);
+    static async getById(id) {
+        const [result] = await db.query("SELECT id, date, startTime, endTime FROM schedules WHERE id = ?", [id]);
+        return result;
+    }
+    static async getByEmployeeId(id, date) {
+        const [result] = await db.query("SELECT id, date, startTime, endTime FROM schedules WHERE employeeId = ? AND date = ?", [id, date]);
         return result;
     }
     static async create(schedule) {

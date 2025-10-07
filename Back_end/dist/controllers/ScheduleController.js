@@ -1,6 +1,7 @@
 import createError from "../utils/createError.js";
 import Schedule from "../models/Schedule.js";
 import validate from "../utils/validate.js";
+import Employee from "../models/Employee.js";
 const ScheduleController = {
     async getAll(req, res, next) {
         try {
@@ -23,15 +24,33 @@ const ScheduleController = {
             next(err);
         }
     },
-    async getByEmployeeId(req, res, next) {
+    async getById(req, res, next) {
         try {
+            const { id } = req.query;
             const err = validate.isValidNumberAdv([
-                { value: req.params.id, min: 1 }
+                { value: id, min: 0 },
             ]);
             if (err)
                 throw err;
-            const id = Number(req.params.id);
-            const schedule = await Schedule.getByEmployeeId(id);
+            const scheduleId = Number(id);
+            const schedule = await Schedule.getById(scheduleId);
+            if (!schedule) {
+                return next(createError(404, "schedule_not_found", "Schedule not found"));
+            }
+            res.status(200).json(schedule);
+        }
+        catch (err) {
+            next(err);
+        }
+    },
+    async getByEmployeeId(req, res, next) {
+        try {
+            const { employeeId, date } = req.query;
+            const employee = await Employee.getByRefId(employeeId);
+            if (!employee) {
+                return next(createError(404, "employee_not_found", "Employee not found"));
+            }
+            const schedule = await Schedule.getByEmployeeId(employee.id, date);
             if (!schedule) {
                 return next(createError(404, "schedule_not_found", "Schedule not found"));
             }
@@ -44,7 +63,15 @@ const ScheduleController = {
     async create(req, res, next) {
         try {
             const { employeeId, date, startTime, endTime } = req.body;
-            const schedule = new Schedule({ employeeId, date, startTime, endTime });
+            const employee = await Employee.getByRefId(employeeId);
+            if (!employee || !employee.id) {
+                return next(createError(404, "employee_not_found", "Employee not found"));
+            }
+            const exist = await Schedule.getByEmployeeId(employee.id, date);
+            if (exist.length !== 0) {
+                return next(createError(402, "already_scheduled", "Employee is already scheduled"));
+            }
+            const schedule = new Schedule({ employeeId: employee.id, date, startTime, endTime });
             await schedule.validate();
             const result = await Schedule.create(schedule);
             res.status(200).json(result);
@@ -62,7 +89,11 @@ const ScheduleController = {
                 throw err;
             const id = Number(req.params.id);
             const { employeeId, date, startTime, endTime } = req.body;
-            const schedule = new Schedule({ id, employeeId, date, startTime, endTime });
+            const employee = await Employee.getByRefId(employeeId);
+            if (!employee || !employee.id) {
+                return next(createError(404, "employee_not_found", "Employee not found"));
+            }
+            const schedule = new Schedule({ id, employeeId: employee.id, date, startTime, endTime });
             await schedule.validate();
             const result = await Schedule.update(schedule);
             if (result.affectedRows === 0) {
@@ -94,16 +125,16 @@ const ScheduleController = {
     },
     async getAvailability(req, res, next) {
         try {
-            const { employeeId, duration, date } = req.body;
+            const { employeeId, duration, date } = req.query;
+            const user = await Employee.getByRefId(employeeId);
             const err = validate.isValidNumberAdv([
-                { value: employeeId, min: 1 },
                 { value: duration, min: 15, max: 90 }
             ]);
             if (err)
                 throw err;
             if (!validate.mySqlDate(date))
                 throw createError(400, "invalid_date_format", "Invalid date. Date format must be YYYY-MM-DD");
-            const result = await Schedule.getAvailability(employeeId, duration, date);
+            const result = await Schedule.getAvailability(Number(user.id), Number(duration), date);
             if (result.length === 0) {
                 return next(createError(404, "availability_not_found", "Availability not found"));
             }
