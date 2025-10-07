@@ -21,7 +21,7 @@ const databaseInit = {
             database: process.env.DB_NAME
         });
         connection.query(`SHOW TABLES`).then(async([result]) => {
-            if((result as any[]).length == 7) {
+            if((result as any[]).length != 7) {
                 console.log("❌ MySql database not found! Creating...");
                 await createMySqlDatabase(filePathToSeed);
                 await createEmployeesInDbs(filePathToEmployee);
