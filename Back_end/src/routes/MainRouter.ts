@@ -1,0 +1,20 @@
+import express from "express";
+import UserRoutes from "./UserRouter.js";
+import HaircutRouter from "./HaircutRouter.js";
+import ScheduleRouter from "./ScheduleRouter.js";
+import AppointmentRouter from "./AppointmentRouter.js";
+import TransactionRouter from "./TransactionRouter.js";
+import ComplaintRoutes from "./ComplaintRouter.js";
+import PaymentRouter from "./PaymentRouter.js";
+
+const MainRouter = express.Router();
+
+MainRouter.use("/users", UserRoutes);
+MainRouter.use("/haircuts", HaircutRouter);
+MainRouter.use("/schedules", ScheduleRouter);
+MainRouter.use("/appointments", AppointmentRouter);
+MainRouter.use("/transaction", TransactionRouter);
+MainRouter.use("/complaints", ComplaintRoutes);
+MainRouter.use("/payment", PaymentRouter);
+
+export default MainRouter;

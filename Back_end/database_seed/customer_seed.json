@@ -1,0 +1,23 @@
+[
+    {
+    "firstName" : "Sarah",
+    "lastName" : "Trépanier", 
+    "email" : "sarah@google.com", 
+    "phoneNumber" : "(819)-456-4321", 
+    "password" : 12345
+    },
+    {
+    "firstName" : "Michel",
+    "lastName" : "Jutras", 
+    "email" : "michel@google.com", 
+    "phoneNumber" : "(819)-456-1234", 
+    "password" : 12345
+    },
+    {
+    "firstName" : "Robert",
+    "lastName" : "Lachance", 
+    "email" : "bob@exemple.com", 
+    "phoneNumber" : "(819)-456-7890", 
+    "password" : 12345
+    }
+]

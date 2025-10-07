@@ -1,0 +1,26 @@
+[
+    {
+    "firstName" : "Chantal",
+    "lastName" : "Demers", 
+    "email" : "chantal@google.com", 
+    "phoneNumber" : "(819)-456-5467", 
+    "password" : 12345,
+    "role" : "employee"
+    },
+    {
+    "firstName" : "Roger",
+    "lastName" : "Lacoupe", 
+    "email" : "roger@google.com", 
+    "phoneNumber" : "(819)-456-4317", 
+    "password" : 12345,
+    "role" : "employee"
+    },
+    {
+    "firstName" : "Susie",
+    "lastName" : "Trudeau", 
+    "email" : "susie@exemple.com", 
+    "phoneNumber" : "(819)-456-7689", 
+    "password" : 12345,
+    "role" : "admin"
+    }
+]

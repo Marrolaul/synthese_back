@@ -1,0 +1,73 @@
+const numberCases = [
+    {
+        desc: "Return null (success) if input is a valid number",
+        input: 18,
+        min: undefined,
+        max: undefined,
+        expected: null,
+    },
+    {
+        desc: "Return null (success) if input is a valid number as a string",
+        input: "42",
+        min: undefined,
+        max: undefined,
+        expected: null,
+    },
+    {
+        desc: "Return an error if input is a string",
+        input: "abc",
+        min: undefined,
+        max: undefined,
+        expected: "error",
+    },
+    {
+        desc: "Return an error if input is null",
+        input: null,
+        min: undefined,
+        max: undefined,
+        expected: "error",
+    },
+    {
+        desc: "Return null (success) if input is higher than min",
+        input: 10,
+        min: 5,
+        max: undefined,
+        expected: null,
+    },
+    {
+        desc: "Return an error if input is lower than min",
+        input: 4,
+        min: 5,
+        max: undefined,
+        expected: "error",
+    },
+    {
+        desc: "Return null (success) if input is lower than max",
+        input: 10,
+        min: undefined,
+        max: 15,
+        expected: null,
+    },
+    {
+        desc: "Return an error if input is higher than max",
+        input: 16,
+        min: undefined,
+        max: 15,
+        expected: "error",
+    },
+    {
+        desc: "Return null (success) if input is between min and max",
+        input: 10,
+        min: 5,
+        max: 15,
+        expected: null,
+    },
+    {
+        desc: "Return an error if input is not between min and max",
+        input: 16,
+        min: 5,
+        max: 15,
+        expected: "error",
+    },
+];
+export default numberCases;

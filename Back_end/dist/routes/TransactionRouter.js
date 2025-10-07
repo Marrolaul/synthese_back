@@ -1,0 +1,10 @@
+import express from 'express';
+import TransactionController from '../controllers/TransactionController.js';
+const TransactionRouter = express.Router();
+TransactionRouter.get("/", TransactionController.getMany);
+TransactionRouter.get("/date", TransactionController.getByDatePaid);
+TransactionRouter.get("/:id", TransactionController.getById);
+TransactionRouter.post("/", TransactionController.create);
+TransactionRouter.patch("/:id", TransactionController.update);
+TransactionRouter.delete("/:id", TransactionController.delete);
+export default TransactionRouter;
