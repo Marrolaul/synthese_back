@@ -1,20 +1,17 @@
-DROP DATABASE IF EXISTS karen_salon;
-CREATE DATABASE karen_salon;
-
 USE karen_salon;
 
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXIST employees (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     refId VARCHAR(24) NOT NULL UNIQUE,
     isActive BOOLEAN DEFAULT 1
 );
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXIST customers (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     refId VARCHAR(24) NOT NULL UNIQUE
 );
 
-CREATE TABLE haircuts (
+CREATE TABLE IF NOT EXIST haircuts (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     price FLOAT NOT NULL,
@@ -22,7 +19,7 @@ CREATE TABLE haircuts (
     isAvailable BOOLEAN NOT NULL
 );
 
-CREATE TABLE schedules (
+CREATE TABLE IF NOT EXIST schedules (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     employeeId INT NOT NULL,
     date DATE NOT NULL,
@@ -31,14 +28,14 @@ CREATE TABLE schedules (
     FOREIGN KEY (employeeId) REFERENCES employees (id)
 );
 
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXIST transactions (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     datePaid DATETIME NOT NULL,
     totalPrice FLOAT NOT NULL,
     paymentMethod VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXIST appointments (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     transactionId INT,
     employeeId INT NOT NULL,
