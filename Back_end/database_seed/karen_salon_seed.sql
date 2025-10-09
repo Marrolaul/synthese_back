@@ -1,7 +1,4 @@
-DROP DATABASE IF EXISTS karen_salon;
-CREATE DATABASE karen_salon;
-
-USE karen_salon;
+USE railway;
 
 CREATE TABLE employees (
 	id INT AUTO_INCREMENT PRIMARY KEY,

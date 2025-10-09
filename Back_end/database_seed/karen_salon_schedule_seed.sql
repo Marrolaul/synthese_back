@@ -1,4 +1,4 @@
-USE karen_salon;
+USE railway;
 
 INSERT INTO schedules (employeeId, date, startTime, endTime)
 VALUES (1, "2025-10-15", "08:00:00", "17:00:00"),
