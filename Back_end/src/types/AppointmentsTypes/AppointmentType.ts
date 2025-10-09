@@ -6,6 +6,7 @@ export interface AppointmentType {
     date : string,
     isPaid : boolean,
     startTime : string
+    status : string
 }
 
 export interface DescEmployeeType {

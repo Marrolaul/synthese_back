@@ -1,17 +1,20 @@
-USE railway;
+DROP DATABASE IF EXISTS karen_salon;
+CREATE DATABASE karen_salon;
 
-CREATE TABLE IF NOT EXISTS employees (
+USE karen_salon;
+
+CREATE TABLE employees (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     refId VARCHAR(24) NOT NULL UNIQUE,
     isActive BOOLEAN DEFAULT 1
 );
 
-CREATE TABLE IF NOT EXISTS customers (
+CREATE TABLE customers (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     refId VARCHAR(24) NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS haircuts (
+CREATE TABLE haircuts (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     price FLOAT NOT NULL,
@@ -19,7 +22,7 @@ CREATE TABLE IF NOT EXISTS haircuts (
     isAvailable BOOLEAN NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS schedules (
+CREATE TABLE schedules (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     employeeId INT NOT NULL,
     date DATE NOT NULL,
@@ -28,14 +31,14 @@ CREATE TABLE IF NOT EXISTS schedules (
     FOREIGN KEY (employeeId) REFERENCES employees (id)
 );
 
-CREATE TABLE IF NOT EXISTS transactions (
+CREATE TABLE transactions (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     datePaid DATETIME NOT NULL,
     totalPrice FLOAT NOT NULL,
     paymentMethod VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS appointments (
+CREATE TABLE appointments (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     transactionId INT,
     employeeId INT NOT NULL,
@@ -53,5 +56,8 @@ CREATE TABLE IF NOT EXISTS appointments (
 INSERT INTO haircuts (name, duration, price, isAvailable)
 VALUES ("Mohawk", 30, 35.99, true),
 	("Permanente", 45, 45.75, true),
-    ("Longueuil", 25, 30.25, true);
-    
+    ("Longueuil", 30, 30.25, true);
+
+
+
+

@@ -7,5 +7,6 @@ AppointmentRouter.get("/setup/info", AppointmentController.getEmployeeAndHaircut
 AppointmentRouter.get("/many", AppointmentController.getMany);
 AppointmentRouter.post("/", AppointmentController.create);
 AppointmentRouter.patch("/:id", AppointmentController.update);
+AppointmentRouter.patch("/cancel/:id", AppointmentController.cancel);
 AppointmentRouter.delete("/:id", AppointmentController.delete);
 export default AppointmentRouter;

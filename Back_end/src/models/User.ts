@@ -1,5 +1,6 @@
 import UserModel from "./UserSchema.js";
 import createError from "../utils/createError.js";
+import bcrypt from "bcrypt";
 import { UserType } from "../types/UsersTypes/UserType";
 import { LoginType } from "../types/UsersTypes/LoginType.js";
 import { UserListType } from "../types/UsersTypes/UserListType.js";
@@ -29,7 +30,7 @@ class User {
    }
 
    static create(newUser : any) {
-      return new Promise<UserType>((res, rej) => {
+      return new Promise<UserType>(async(res, rej) => {
          if (!newUser) {
             return rej(createError(400, "bad_request", "Bad request"));
          }
@@ -40,6 +41,12 @@ class User {
             return rej(createError(406, validationResult, "Bad request"));
          }
          userToAdd.email = String(userToAdd.email).trim().toLowerCase();
+
+         if(!userToAdd.password) {
+            return rej(createError(406, "invalid_password", "Bad request"));
+         }
+         const hashedPassword = await bcrypt.hash(String(userToAdd.password), 10);
+         userToAdd.password = hashedPassword;
          
          UserModel.create(userToAdd).then((data) => {
             let newUser = new User(data);
@@ -74,12 +81,13 @@ class User {
          if(!EMAILREGEX.test(loginInfo.email)) {
             return rej(createError(401, "invalid_credential", "Invalid Credential"));
          }
-         UserModel.findOne({email : loginInfo.email}).then((data) => {
+         UserModel.findOne({email : loginInfo.email}).then(async (data) => {
             if(!data) {
                return rej(createError(404, "user_not_found", "User Not Found"));
             }
             let foundUser = new User(data);
-            if(foundUser.password === loginInfo.password) {
+            const isPasswordValid = await bcrypt.compare(loginInfo.password, foundUser.password);
+            if(isPasswordValid) {
                let userToReturn = foundUser.toJSon();
                return res(userToReturn);
             }
@@ -125,16 +133,24 @@ class User {
          if(!modifiedUser.id || modifiedUser.id.length != ID_LENGTH) {
             return rej(createError(400, "bad_request", "Bad request"));
          }
-         UserModel.findById(modifiedUser.id).then((data) => {
+         UserModel.findById(modifiedUser.id).then(async(data) => {
             if(!data) {
                return rej(createError(404, "user_not_found", "User Not Found"));
             }
             if (modifiedUser.password && !modifiedUser.currentPassword) {
                return rej(createError(400, "bad_request", "Current password is required to set a new password"));
             }
-            if(modifiedUser.currentPassword && modifiedUser.currentPassword != data.toObject().password) {
-               return rej(createError(401, "invalid_password", "Invalid Password"));
+            if(modifiedUser.currentPassword) {
+               const isPasswordValid = await bcrypt.compare(modifiedUser.currentPassword, data.toObject().password);
+               if(!isPasswordValid) {
+                  return rej(createError(401, "invalid_password", "Invalid Password"));
+               }
             }
+            if(modifiedUser.password) {
+               const hashedPassword = await bcrypt.hash(String(modifiedUser.password), 10);
+               modifiedUser.password = hashedPassword;
+            }
+
             let updatedUser = new User({ ...data.toObject(), ...modifiedUser });
             let validationResult = updatedUser.isValidUser();
 
@@ -191,7 +207,6 @@ class User {
       if(!this.firstName) return "invalid_first_name";
       if(!this.lastName) return "invalid_last_name";
       if(!this.isValidEmail()) return "invalid_email";
-      // if(!this.password) return "invalid_password";
       if(!this.isValidRole()) return "invalid_role";
       if(!this.isValidPhoneNumber()) return "invalid_phone_number";
       return "valid_user";

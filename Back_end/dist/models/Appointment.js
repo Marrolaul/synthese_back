@@ -57,8 +57,8 @@ export class Appointment {
         const count = await this.getCount();
         return { appointments, count };
     }
-    static async getByFieldId(id, field = "appointment", date) {
-        const query = this.getQueryFromField(field, date);
+    static async getByFieldId(id, field = "appointment", date, getCancelled = false) {
+        const query = this.getQueryFromField(field, date, getCancelled);
         const params = [id];
         if (date) {
             const dateStr = date.split("T")[0];
@@ -87,17 +87,19 @@ export class Appointment {
                 },
                 date: a.date.toISOString().split("T")[0],
                 startTime: a.startTime,
-                isPaid: a.transactionId ? true : false
+                isPaid: a.transactionId ? true : false,
+                status: a.status
             };
         }));
         return appointments;
     }
-    static getQueryFromField(field, date) {
+    static getQueryFromField(field, date, getCancelled) {
         let query = `SELECT
             a.id as appointmentId,
+            a.transactionId,
             a.date,
             a.startTime,
-            a.transactionId,
+            a.status,
             e.id as employeeId,
             e.refId as employeeRefId,
             c.refId as customerRefId,
@@ -108,8 +110,10 @@ export class Appointment {
          FROM appointments a
          JOIN employees e ON a.employeeId = e.id
          JOIN customers c ON a.customerId = c.id
-         JOIN haircuts h ON a.haircutId = h.id
-         WHERE status != 'cancelled'`;
+         JOIN haircuts h ON a.haircutId = h.id`;
+        if (!getCancelled) {
+            query += " WHERE status != 'cancelled'";
+        }
         switch (field) {
             case "appointment":
                 query += " AND a.id = ?";
@@ -136,6 +140,10 @@ export class Appointment {
     static async update(appointment) {
         const { id, transactionId, employeeId, customerId, haircutId, date, startTime, status } = appointment;
         const [result] = await db.query("UPDATE appointments SET transactionId = ?, employeeId = ?, customerId = ?, haircutId = ?, date = ?, startTime = ?, status = ? WHERE id = ?", [transactionId, employeeId, customerId, haircutId, date, startTime, status, id]);
+        return result;
+    }
+    static async cancel(id) {
+        const [result] = await db.query("UPDATE appointments SET status = 'cancelled' WHERE id = ?", [id]);
         return result;
     }
     static async delete(id) {

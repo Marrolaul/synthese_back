@@ -130,6 +130,7 @@ const userController = {
         if(!req.body) {
             next(createError(400, "bad_request", "Bad request"));
         }
+        console.log(req.body)
         let newEmployee: NewEmployeeUserType = {...req.body};
         if(newEmployee.role != "employee" && newEmployee.role != "admin") {
             next(createError(406, "invalid_role", "Invalid role"));

@@ -5,64 +5,57 @@ import createError from '../utils/createError.js';
 import { Appointment } from '../models/Appointment.js';
 import { Transaction } from '../models/Transaction.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET);
-export default async function charge(req, res, next) {
+export async function charge(req, res, next) {
     if (!validate.isArrayOfNumber(req.body)) {
         next(createError(400, "bad_request", "Bad Request"));
     }
     let appointmentsIdList = req.body;
-    let lineItems = await Promise.all(appointmentsIdList.map((element) => {
-        Appointment.getByFieldId(element).then((result) => {
-            let appointmentInfo = result[0];
+    let lineItems = await Promise.all(appointmentsIdList.map(async (element) => {
+        try {
+            const result = await Appointment.getByFieldId(element);
+            const appointmentInfo = result[0];
             return {
                 price_data: {
                     currency: 'cad',
                     product_data: {
-                        name: appointmentInfo.haircut.name
+                        name: appointmentInfo.haircut.name,
                     },
-                    unit_amount: appointmentInfo.haircut.price * 100
+                    unit_amount: appointmentInfo.haircut.price * 100,
                 },
-                quantity: 1
+                quantity: 1,
             };
-        }).catch((error) => {
+        }
+        catch (error) {
             next(error);
-        });
+        }
     }));
-    console.log(lineItems);
     const session = await stripe.checkout.sessions.create({
         line_items: lineItems,
         mode: "payment",
-        success_url: 'http://localhost:3000/complete',
-        cancel_url: 'http://localhost:3000/cancel'
+        success_url: 'http://localhost:5173/complete',
+        cancel_url: 'http://localhost:5173/cancel',
+        payment_intent_data: { metadata: { appIdList: appointmentsIdList.toString() } }
     });
     if (session.url) {
-        res.status(308).json({ url: session.url });
-        try {
-            fulfillCheckout(session.id, appointmentsIdList);
-        }
-        catch (error) {
-            console.log(error);
-        }
+        res.status(200).json({ url: session.url });
     }
     else {
         next(createError(500, "error_payment", "Stripe Error"));
     }
 }
-async function fulfillCheckout(sessionId, appointmentIdList) {
-    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-    if (checkoutSession.payment_status !== 'unpaid') {
-        const newTransaction = new Transaction({
-            datePaid: new Date(Date.now()).toISOString().split('T')[0],
-            totalPrice: checkoutSession.amount_total,
-            paymentMethod: "Stripe"
+export async function fulfillCheckout(totalPrice, appointmentIdList) {
+    const newTransaction = new Transaction({
+        datePaid: new Date(Date.now()).toISOString().split('T')[0],
+        totalPrice: totalPrice,
+        paymentMethod: "Stripe"
+    });
+    try {
+        let savedTransaction = await Transaction.create(newTransaction);
+        appointmentIdList.forEach(async (appointmentId) => {
+            await savedTransaction.confirm(appointmentId);
         });
-        try {
-            let savedTransaction = await Transaction.create(newTransaction);
-            appointmentIdList.forEach(async (appointmentId) => {
-                await savedTransaction.confirm(appointmentId);
-            });
-        }
-        catch {
-            throw createError(500, "error_save_payment", "Internal Error");
-        }
+    }
+    catch {
+        throw createError(500, "error_save_payment", "Internal Error");
     }
 }

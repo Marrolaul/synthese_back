@@ -30,13 +30,26 @@ const AppointmentController = {
     async getByFieldId(req, res, next) {
         try {
             const refId = req.query.id;
-            const employee = await Employee.getByRefId(refId);
-            if (!employee?.id) {
-                return next(createError(404, "employee_not_found", "Employee not found"));
-            }
             const field = req.query.field || "appointment";
             const date = req.query.date || undefined;
-            const appointments = await Appointment.getByFieldId(employee.id, field, date);
+            const getCancelled = req.query.getCancelled === 'true';
+            let id = -1;
+            switch (field) {
+                case 'appointment':
+                case 'employee':
+                    const employee = await Employee.getByRefId(refId);
+                    if (!employee?.id) {
+                        return next(createError(404, "employee_not_found", "Employee not found"));
+                    }
+                    id = employee.id;
+                case 'customer':
+                    const customer = await Customer.getByRefId(refId);
+                    if (!customer?.id) {
+                        return next(createError(404, "customer_not_found", "Customer not found"));
+                    }
+                    id = customer.id;
+            }
+            const appointments = await Appointment.getByFieldId(id, field, date, getCancelled);
             if (!appointments) {
                 return next(createError(404, "appointment_not_found", "Appointment not found"));
             }
@@ -72,6 +85,24 @@ const AppointmentController = {
             const appointment = new Appointment({ id, transactionId, employeeId, customerId, haircutId, date, startTime, status });
             await appointment.validate();
             const result = await Appointment.update(appointment);
+            if (result.affectedRows === 0) {
+                return next(createError(400, "appointment_update_error", "Error while updating appointment"));
+            }
+            res.status(200).json("Update successful");
+        }
+        catch (err) {
+            next(err);
+        }
+    },
+    async cancel(req, res, next) {
+        try {
+            const err = validate.isValidNumberAdv([
+                { value: req.params.id, min: 1 }
+            ]);
+            if (err)
+                throw err;
+            const id = Number(req.params.id);
+            const result = await Appointment.cancel(id);
             if (result.affectedRows === 0) {
                 return next(createError(400, "appointment_update_error", "Error while updating appointment"));
             }

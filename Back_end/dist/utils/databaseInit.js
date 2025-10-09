@@ -6,46 +6,63 @@ import Employee from "../models/Employee.js";
 const filePathToSeed = "./database_seed/karen_salon_seed.sql";
 const filePathToCustomer = "./database_seed/customer_seed.json";
 const filePathToEmployee = "./database_seed/employee_seed.json";
+const filePathToScheduleSeed = "./database_seed/karen_salon_schedule_seed.sql";
 const databaseInit = {
     async ensureDatabase() {
         const connection = await mysql.createConnection({
             host: process.env.HOST,
             user: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME
+            password: process.env.DB_PASSWORD
         });
-        connection.query(`SHOW TABLES`).then(async ([result]) => {
-            console.log(result.length);
-            if (result.length != 7) {
+        connection.query(`SHOW DATABASES LIKE ?`, [process.env.DB_NAME]).then(async ([result]) => {
+            if (result.length == 0) {
                 console.log("❌ MySql database not found! Creating...");
                 await createMySqlDatabase(filePathToSeed);
                 await createEmployeesInDbs(filePathToEmployee);
                 await createCustomersInDbs(filePathToCustomer);
+                setTimeout(async () => {
+                    await createMySqlDatabase(filePathToScheduleSeed, true);
+                }, 2000); // Executes after 2 seconds
             }
             else {
                 console.log("✔️  MySql database connected");
             }
-        }).catch((err) => {
-            console.log("❌ An error occured during the connection to the MySql database!", err);
+        }).catch(() => {
+            console.log("❌ An error occured during the connection to the MySql database!");
         }).finally(async () => {
             await connection.end();
         });
     }
 };
-async function createMySqlDatabase(filePath) {
+async function createMySqlDatabase(filePath, isDbCreated = false) {
     const sql = fs.readFileSync(filePath, "utf-8");
-    const connectionToDb = await mysql.createConnection({
-        host: process.env.HOST,
-        user: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        multipleStatements: true
-    });
+    let connectionToDbInfo;
+    if (isDbCreated) {
+        connectionToDbInfo = {
+            host: process.env.HOST,
+            user: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            multipleStatements: true,
+        };
+    }
+    else {
+        connectionToDbInfo = {
+            host: process.env.HOST,
+            user: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            multipleStatements: true,
+        };
+    }
+    const connectionToDb = await mysql.createConnection(connectionToDbInfo);
     try {
         await connectionToDb.query(sql);
-        console.log("✔️  MySql database created!");
+        let infoString;
+        isDbCreated ? infoString = "✔️  MySql database updated!" : infoString = "✔️  MySql database created!";
+        console.log(infoString);
     }
-    catch {
-        console.log("❌ An error occured during the connection to the MySql database!");
+    catch (err) {
+        console.log("❌ An error occured during the connection to the MySql database!", err);
     }
     finally {
         await connectionToDb.end();
@@ -54,9 +71,9 @@ async function createMySqlDatabase(filePath) {
 async function createEmployeesInDbs(filePath) {
     const employeeSeed = fs.readFileSync(filePath).toString();
     let employeeList = JSON.parse(employeeSeed);
-    employeeList.forEach((employee) => {
+    employeeList.forEach(async (employee) => {
         try {
-            User.create(employee).then((result) => {
+            await User.create(employee).then((result) => {
                 let employeeInDb = {
                     refId: result.id,
                     isActive: true
@@ -76,9 +93,9 @@ async function createEmployeesInDbs(filePath) {
 async function createCustomersInDbs(filePath) {
     const customerSeed = fs.readFileSync(filePath).toString();
     let customerList = JSON.parse(customerSeed);
-    customerList.forEach((customer) => {
+    customerList.forEach(async (customer) => {
         try {
-            User.create(customer).then((result) => {
+            await User.create(customer).then((result) => {
                 let customerInDb = {
                     id: -1,
                     refId: result.id,
