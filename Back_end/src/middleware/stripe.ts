@@ -37,8 +37,8 @@ export async function charge(req : Request, res : Response, next : NextFunction)
     const session = await stripe.checkout.sessions.create({
         line_items: lineItems,
         mode: "payment",
-        success_url: 'http://localhost:5173/complete',
-        cancel_url: 'http://localhost:5173/cancel',
+        success_url: 'https://synthese-front.vercel.app/complete',
+        cancel_url: 'https://synthese-front.vercel.app/cancel',
         payment_intent_data: {metadata: {appIdList : appointmentsIdList.toString()}}
     });
     if(session.url){
